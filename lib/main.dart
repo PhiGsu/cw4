@@ -28,7 +28,28 @@ class PlanManagerScreen extends StatefulWidget {
 }
 
 class _PlanManagerScreenState extends State<PlanManagerScreen> {
-  List<Plan> plans = [];
+  List<Plan> plans = [
+    Plan(
+        name: 'Adopt a Pet',
+        description: 'A man on the corner sells a snake.',
+        date: DateTime(2025, 3, 28),
+        completed: true),
+    Plan(
+        name: 'Trip to Paris',
+        description: 'Oui oui baguette.',
+        date: DateTime(2025, 5, 10),
+        completed: true),
+    Plan(
+      name: 'Adopt a Child',
+      description: 'Fill the empty void in your life.',
+      date: DateTime(2025, 7, 3),
+    ),
+    Plan(
+      name: 'Trip to Japan',
+      description: 'I need to up the score on Godzilla.',
+      date: DateTime(2025, 11, 24),
+    ),
+  ];
 
   void _addPlan(Plan plan) {
     setState(() {
@@ -72,14 +93,16 @@ class _PlanManagerScreenState extends State<PlanManagerScreen> {
           return AlertDialog(
             title: const Text('Create plan'),
             content: SingleChildScrollView(
-              child: ListView(
+              child: Column(
                 children: <Widget>[
                   TextField(
                       controller: planName,
                       decoration: InputDecoration(labelText: 'Plan Name')),
                   TextField(
                       controller: planDescription,
-                      decoration: InputDecoration(labelText: 'Description')),
+                      decoration: InputDecoration(labelText: 'Description'),
+                      maxLines: null),
+                  SizedBox(height: 20),
                   TextButton(
                     onPressed: () async {
                       DateTime? pickedDate = await showDatePicker(
@@ -129,44 +152,55 @@ class _PlanManagerScreenState extends State<PlanManagerScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Plan Manager'),
+        centerTitle: true,
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Expanded(
-                child: SingleChildScrollView(
-                    child: ListView.builder(
-              itemCount: plans.length,
-              itemBuilder: (context, index) {
-                final plan = plans[index];
-                return GestureDetector(
-                  onHorizontalDragUpdate: (details) {
-                    // On swipe left
-                    if (details.primaryDelta! < 0) {
-                      _completePlan(index, false);
-                    }
-                    // On swipe right
-                    if (details.primaryDelta! > 0) {
-                      _completePlan(index, true);
-                    }
-                  },
-                  onLongPress: () {
-                    _showCreatePlanDialog(index);
-                  },
-                  onDoubleTap: () => _deletePlan(index),
-                  child: Card(
-                    child: ListTile(
-                      title: Text(plan.name),
-                      subtitle: Text(plan.description),
-                      trailing: plan.completed
-                          ? const Icon(Icons.check_circle, color: Colors.green)
-                          : const Icon(Icons.circle_outlined, color: Colors.cyan),
-                    ),
-                  ),
-                );
-              },
-            )))
+                child: ReorderableListView(
+                    onReorder: (int oldIndex, int newIndex) {
+                      setState(() {
+                        if (newIndex > oldIndex) {
+                          newIndex -= 1;
+                        }
+                        final Plan item = plans.removeAt(oldIndex);
+                        plans.insert(newIndex, item);
+                      });
+                    },
+                    children: List.generate(plans.length, (index) {
+                      final plan = plans[index];
+                      return GestureDetector(
+                        key: Key('$index'),
+                        onHorizontalDragUpdate: (details) {
+                          // On swipe left
+                          if (details.primaryDelta! < 0) {
+                            _completePlan(index, false);
+                          }
+                          // On swipe right
+                          if (details.primaryDelta! > 0) {
+                            _completePlan(index, true);
+                          }
+                        },
+                        onLongPress: () {
+                          _showCreatePlanDialog(index);
+                        },
+                        onDoubleTap: () => _deletePlan(index),
+                        child: Card(
+                            child: ListTile(
+                            title: Text(plan.name),
+                            subtitle: Text(plan.description),
+                            leading: plan.completed
+                              ? const Icon(Icons.check_circle,
+                                color: Colors.green)
+                              : const Icon(Icons.circle_outlined,
+                                color: Colors.cyan),
+                            trailing: Text('${plan.date.toString().substring(0, 10)}  '),
+                          ),
+                        ),
+                      );
+                    })))
           ],
         ),
       ),
